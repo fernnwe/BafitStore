@@ -51,25 +51,33 @@ const productJSON = JSON.stringify(products);
   let selectedSizes = {};
 
   function initFirebase() {
+    if (typeof window.firebaseDB === "undefined") {
+      setTimeout(initFirebase, 500);
+      return;
+    }
     try {
-      if (typeof window.firebaseDB === "undefined") return;
       window.firebaseDB.ref("products").on("value", (snap) => {
         const data = snap.val();
         if (data) {
-          products = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
-          localStorage.setItem("bafit_products", JSON.stringify(products));
+          const arr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+          if (arr.length > 0) {
+            products = arr;
+            localStorage.setItem("bafit_products", JSON.stringify(products));
+            renderProducts();
+          }
         } else {
           window.firebaseDB.ref("products").set(DEFAULT_PRODUCTS);
           products = DEFAULT_PRODUCTS;
           localStorage.setItem("bafit_products", JSON.stringify(products));
+          renderProducts();
         }
-        renderProducts();
       });
     } catch (e) {
-      console.log("Firebase no disponible, usando datos locales");
+      console.log("Firebase error:", e);
     }
   }
 
+  renderProducts();
   initFirebase();
 
   let cart = [];
