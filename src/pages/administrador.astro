@@ -1,0 +1,450 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { products } from "../data/products";
+import "../styles/global.css";
+
+const productJSON = JSON.stringify(products);
+---
+
+<BaseLayout title="BAFIT Store - Administrador">
+  <!-- Login Gate -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <img src="/bafit-logo.jpg" alt="BAFIT Store" class="login-logo" />
+      <h2>Panel de Administracion</h2>
+      <p>Ingresa la contrasena para continuar</p>
+      <form id="loginForm" class="login-form">
+        <input type="password" id="loginPassword" placeholder="Contrasena" autocomplete="off" />
+        <span class="login-error" id="loginError">Contrasena incorrecta</span>
+        <button type="submit" class="admin-btn primary login-btn">Ingresar</button>
+      </form>
+      <a href="https://wa.me/50581088124" target="_blank" class="login-support">
+        Soporte tecnico MKDIGITAL
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin Panel (hidden until login) -->
+  <div id="adminPanel" style="display:none">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="/" class="logo">
+        <img src="/bafit-logo.jpg" alt="BAFIT Store" class="logo-img" />
+      </a>
+      <h1>Panel de Administracion</h1>
+      <div class="admin-header-right">
+        <a href="/" class="admin-back">Volver a la tienda</a>
+        <button class="admin-btn" id="btnLogout">Cerrar sesion</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <div class="admin-stats" id="adminStats"></div>
+
+    <div class="admin-toolbar">
+      <button class="admin-btn primary" id="btnAddProduct">+ Nuevo Producto</button>
+      <button class="admin-btn danger" id="btnResetAll">Restaurar productos originales</button>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="productsTable">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>Nombre</th>
+            <th>Marca</th>
+            <th>Categoria</th>
+            <th>Precio</th>
+            <th>Precio Original</th>
+            <th>Descuento</th>
+            <th>Badge</th>
+            <th>Tallas</th>
+            <th>Agotadas</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal for Add/Edit -->
+  <div class="admin-overlay" id="modalOverlay"></div>
+  <div class="admin-modal" id="productModal">
+    <div class="admin-modal-header">
+      <h2 id="modalTitle">Nuevo Producto</h2>
+      <button class="admin-modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="productForm" class="admin-form">
+      <input type="hidden" id="formId" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre del producto</label>
+          <input type="text" id="formName" required placeholder="Ej: Youngla Titan Tank" />
+        </div>
+        <div class="form-group">
+          <label>URL de la imagen</label>
+          <input type="url" id="formImage" required placeholder="https://..." />
+          <div class="form-preview" id="imagePreview"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Marca</label>
+          <select id="formBrand" required>
+            <option value="youngla">YoungLA</option>
+            <option value="gymshark">Gymshark</option>
+            <option value="breathediviny">Breathediviny</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="formCategory" required>
+            <option value="camisetas">Camisetas</option>
+            <option value="shorts">Shorts</option>
+            <option value="accesorios">Accesorios</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Precio (C$)</label>
+          <input type="number" id="formPrice" required min="0" step="1" placeholder="459" />
+        </div>
+        <div class="form-group">
+          <label>Precio original (C$) - opcional</label>
+          <input type="number" id="formOriginalPrice" min="0" step="1" placeholder="Dejar vacio si no aplica" />
+        </div>
+        <div class="form-group">
+          <label>Descuento (%) - opcional</label>
+          <input type="number" id="formDiscount" min="0" max="100" step="1" placeholder="20" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Badge</label>
+          <select id="formBadge">
+            <option value="">Ninguno</option>
+            <option value="new">Nuevo</option>
+            <option value="hot">Popular</option>
+            <option value="sale">Oferta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tallas disponibles (separadas por coma)</label>
+          <input type="text" id="formSizes" required placeholder="S, M, L, XL" />
+        </div>
+        <div class="form-group">
+          <label>Tallas agotadas (separadas por coma)</label>
+          <input type="text" id="formOutOfStock" placeholder="Dejar vacio si no hay" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="admin-btn" id="formCancel">Cancelar</button>
+        <button type="submit" class="admin-btn primary">Guardar Producto</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Delete Confirm -->
+  <div class="admin-overlay" id="deleteOverlay"></div>
+  <div class="admin-modal delete-modal" id="deleteModal">
+    <div class="admin-modal-header">
+      <h2>Confirmar Eliminacion</h2>
+      <button class="admin-modal-close" id="deleteClose">&times;</button>
+    </div>
+    <div class="delete-body">
+      <p id="deleteMsg">Estas seguro que deseas eliminar este producto?</p>
+      <div class="form-actions">
+        <button class="admin-btn" id="deleteCancelBtn">Cancelar</button>
+        <button class="admin-btn danger" id="deleteConfirmBtn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <span class="toast-icon">&#10003;</span>
+    <span id="toastMessage"></span>
+  </div>
+  </div> <!-- /adminPanel -->
+</BaseLayout>
+
+<script is:inline define:vars={{ productJSON }}>
+  const ADMIN_PASSWORD = "12345";
+  const LOGIN_KEY = "bafit_admin_auth";
+  const DEFAULT_PRODUCTS = JSON.parse(productJSON);
+  const STORAGE_KEY = "bafit_products";
+
+  function loadProducts() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return JSON.parse(productJSON);
+  }
+
+  function saveProducts(prods) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prods));
+  }
+
+  let products = loadProducts();
+  let deleteTargetId = null;
+
+  // --- LOGIN ---
+  function checkAuth() {
+    return sessionStorage.getItem(LOGIN_KEY) === "1";
+  }
+
+  function showAdmin() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("adminPanel").style.display = "";
+    renderTable();
+  }
+
+  function showLogin() {
+    document.getElementById("loginScreen").style.display = "";
+    document.getElementById("adminPanel").style.display = "none";
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = document.getElementById("loginPassword");
+    const error = document.getElementById("loginError");
+    if (input.value === ADMIN_PASSWORD) {
+      sessionStorage.setItem(LOGIN_KEY, "1");
+      error.style.display = "none";
+      input.value = "";
+      showAdmin();
+    } else {
+      error.style.display = "block";
+      input.value = "";
+      input.focus();
+    }
+  });
+
+  document.getElementById("btnLogout").addEventListener("click", () => {
+    sessionStorage.removeItem(LOGIN_KEY);
+    showLogin();
+  });
+
+  if (checkAuth()) {
+    showAdmin();
+  } else {
+    showLogin();
+  }
+
+  function renderStats() {
+    const el = document.getElementById("adminStats");
+    const total = products.length;
+    const byBrand = {};
+    products.forEach((p) => {
+      byBrand[p.brand] = (byBrand[p.brand] || 0) + 1;
+    });
+    el.innerHTML = `
+      <div class="stat-card"><span class="stat-num">${total}</span><span class="stat-label">Productos totales</span></div>
+      <div class="stat-card"><span class="stat-num">${byBrand.youngla || 0}</span><span class="stat-label">YoungLA</span></div>
+      <div class="stat-card"><span class="stat-num">${byBrand.gymshark || 0}</span><span class="stat-label">Gymshark</span></div>
+      <div class="stat-card"><span class="stat-num">${byBrand.breathediviny || 0}</span><span class="stat-label">Breathediviny</span></div>
+    `;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("productsBody");
+    const brandLabel = (b) =>
+      b === "youngla" ? "YoungLA" : b === "gymshark" ? "Gymshark" : "Breathediviny";
+    const catLabel = (c) =>
+      c === "camisetas" ? "Camisetas" : c === "shorts" ? "Shorts" : "Accesorios";
+    const badgeLabel = (b) =>
+      b === "new" ? "Nuevo" : b === "hot" ? "Popular" : b === "sale" ? "Oferta" : "-";
+
+    tbody.innerHTML = products
+      .map((p) => {
+        const brandClass = `brand-${p.brand}-text`;
+        return `
+        <tr>
+          <td><img class="admin-thumb" src="${p.image}" alt="${p.name}" /></td>
+          <td class="admin-name-cell">${p.name}</td>
+          <td><span class="${brandClass} admin-brand">${brandLabel(p.brand)}</span></td>
+          <td>${catLabel(p.category)}</td>
+          <td class="admin-price">C$${p.price.toLocaleString()}</td>
+          <td>${p.originalPrice ? `C$${p.originalPrice.toLocaleString()}` : "-"}</td>
+          <td>${p.discount ? `${p.discount}%` : "-"}</td>
+          <td>${badgeLabel(p.badge)}</td>
+          <td><div class="admin-sizes">${p.sizes.join(", ")}</div></td>
+          <td><div class="admin-sizes">${p.outOfStock.length ? p.outOfStock.join(", ") : "-"}</div></td>
+          <td class="admin-actions-cell">
+            <button class="admin-action-btn edit" data-edit-id="${p.id}" title="Editar">&#9998;</button>
+            <button class="admin-action-btn delete" data-delete-id="${p.id}" title="Eliminar">&#10005;</button>
+          </td>
+        </tr>`;
+      })
+      .join("");
+
+    tbody.querySelectorAll("[data-edit-id]").forEach((btn) => {
+      btn.addEventListener("click", () => openEdit(parseInt(btn.dataset.editId)));
+    });
+    tbody.querySelectorAll("[data-delete-id]").forEach((btn) => {
+      btn.addEventListener("click", () => openDelete(parseInt(btn.dataset.deleteId)));
+    });
+
+    renderStats();
+  }
+
+  function openModal(title) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalOverlay").classList.add("open");
+    document.getElementById("productModal").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    document.getElementById("modalOverlay").classList.remove("open");
+    document.getElementById("productModal").classList.remove("open");
+    document.body.style.overflow = "";
+    document.getElementById("productForm").reset();
+    document.getElementById("formId").value = "";
+    document.getElementById("imagePreview").innerHTML = "";
+  }
+
+  function openAdd() {
+    document.getElementById("formId").value = "";
+    openModal("Nuevo Producto");
+  }
+
+  function openEdit(id) {
+    const p = products.find((x) => x.id === id);
+    if (!p) return;
+    document.getElementById("formId").value = p.id;
+    document.getElementById("formName").value = p.name;
+    document.getElementById("formImage").value = p.image;
+    document.getElementById("formBrand").value = p.brand;
+    document.getElementById("formCategory").value = p.category;
+    document.getElementById("formPrice").value = p.price;
+    document.getElementById("formOriginalPrice").value = p.originalPrice || "";
+    document.getElementById("formDiscount").value = p.discount || "";
+    document.getElementById("formBadge").value = p.badge || "";
+    document.getElementById("formSizes").value = p.sizes.join(", ");
+    document.getElementById("formOutOfStock").value = p.outOfStock.join(", ");
+    document.getElementById("imagePreview").innerHTML = `<img src="${p.image}" />`;
+    openModal("Editar Producto");
+  }
+
+  function openDelete(id) {
+    deleteTargetId = id;
+    const p = products.find((x) => x.id === id);
+    document.getElementById("deleteMsg").textContent = `Eliminar "${p.name}"? Esta accion no se puede deshacer.`;
+    document.getElementById("deleteOverlay").classList.add("open");
+    document.getElementById("deleteModal").classList.add("open");
+  }
+
+  function closeDelete() {
+    deleteTargetId = null;
+    document.getElementById("deleteOverlay").classList.remove("open");
+    document.getElementById("deleteModal").classList.remove("open");
+  }
+
+  document.getElementById("btnAddProduct").addEventListener("click", openAdd);
+
+  document.getElementById("btnResetAll").addEventListener("click", () => {
+    if (confirm("Restaurar todos los productos originales? Se perderan los cambios.")) {
+      products = JSON.parse(productJSON);
+      saveProducts(products);
+      renderTable();
+      showToast("Productos restaurados");
+    }
+  });
+
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("modalOverlay").addEventListener("click", closeModal);
+  document.getElementById("formCancel").addEventListener("click", closeModal);
+
+  document.getElementById("deleteClose").addEventListener("click", closeDelete);
+  document.getElementById("deleteOverlay").addEventListener("click", closeDelete);
+  document.getElementById("deleteCancelBtn").addEventListener("click", closeDelete);
+
+  document.getElementById("deleteConfirmBtn").addEventListener("click", () => {
+    if (deleteTargetId === null) return;
+    products = products.filter((p) => p.id !== deleteTargetId);
+    saveProducts(products);
+    renderTable();
+    closeDelete();
+    showToast("Producto eliminado");
+  });
+
+  document.getElementById("formImage").addEventListener("input", (e) => {
+    const url = e.target.value;
+    document.getElementById("imagePreview").innerHTML = url
+      ? `<img src="${url}" onerror="this.style.display='none'" />`
+      : "";
+  });
+
+  document.getElementById("productForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const idVal = document.getElementById("formId").value;
+    const name = document.getElementById("formName").value.trim();
+    const image = document.getElementById("formImage").value.trim();
+    const brand = document.getElementById("formBrand").value;
+    const category = document.getElementById("formCategory").value;
+    const price = parseInt(document.getElementById("formPrice").value);
+    const originalPrice = document.getElementById("formOriginalPrice").value
+      ? parseInt(document.getElementById("formOriginalPrice").value)
+      : null;
+    const discount = document.getElementById("formDiscount").value
+      ? parseInt(document.getElementById("formDiscount").value)
+      : null;
+    const badge = document.getElementById("formBadge").value || null;
+    const sizes = document.getElementById("formSizes").value
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const outOfStock = document.getElementById("formOutOfStock").value
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!name || !image || !price || sizes.length === 0) {
+      showToast("Completa todos los campos requeridos");
+      return;
+    }
+
+    if (idVal) {
+      const idx = products.findIndex((p) => p.id === parseInt(idVal));
+      if (idx !== -1) {
+        products[idx] = {
+          ...products[idx],
+          name, image, brand, category, price,
+          originalPrice, discount, badge, sizes, outOfStock,
+        };
+      }
+      showToast("Producto actualizado");
+    } else {
+      const maxId = products.reduce((max, p) => Math.max(max, p.id), 0);
+      products.push({
+        id: maxId + 1,
+        name, image, brand, category, price,
+        originalPrice, discount, badge, sizes, outOfStock,
+      });
+      showToast("Producto agregado");
+    }
+
+    saveProducts(products);
+    renderTable();
+    closeModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeModal();
+      closeDelete();
+    }
+  });
+
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    document.getElementById("toastMessage").textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2500);
+  }
+</script>
