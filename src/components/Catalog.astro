@@ -77,14 +77,6 @@ const productJSON = JSON.stringify(products);
     }
   }
 
-  renderProducts();
-  initFirebase();
-
-  let cart = [];
-  let currentFilter = "all";
-  let searchQuery = "";
-  let selectedSizes = {};
-
   const brandLabel = (b) =>
     b === "youngla" ? "YoungLA" : b === "gymshark" ? "Gymshark" : "Breathediviny";
 
