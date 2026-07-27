@@ -36,7 +36,7 @@ const productJSON = JSON.stringify(products);
   const WHATSAPP_NUMBER = "50557502645";
   const DEFAULT_PRODUCTS = JSON.parse(productJSON);
 
-  function loadProducts() {
+  function loadProductsLocal() {
     try {
       const stored = localStorage.getItem("bafit_products");
       if (stored) return JSON.parse(stored);
@@ -44,7 +44,33 @@ const productJSON = JSON.stringify(products);
     return DEFAULT_PRODUCTS;
   }
 
-  let products = loadProducts();
+  let products = loadProductsLocal();
+  let cart = [];
+  let currentFilter = "all";
+  let searchQuery = "";
+  let selectedSizes = {};
+
+  function initFirebase() {
+    try {
+      if (typeof window.firebaseDB === "undefined") return;
+      window.firebaseDB.ref("products").on("value", (snap) => {
+        const data = snap.val();
+        if (data) {
+          products = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+          localStorage.setItem("bafit_products", JSON.stringify(products));
+        } else {
+          window.firebaseDB.ref("products").set(DEFAULT_PRODUCTS);
+          products = DEFAULT_PRODUCTS;
+          localStorage.setItem("bafit_products", JSON.stringify(products));
+        }
+        renderProducts();
+      });
+    } catch (e) {
+      console.log("Firebase no disponible, usando datos locales");
+    }
+  }
+
+  initFirebase();
 
   let cart = [];
   let currentFilter = "all";

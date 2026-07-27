@@ -184,8 +184,27 @@ const productJSON = JSON.stringify(products);
     return JSON.parse(productJSON);
   }
 
+  function initFirebase() {
+    try {
+      if (typeof window.firebaseDB === "undefined") return;
+      window.firebaseDB.ref("products").once("value", (snap) => {
+        const data = snap.val();
+        if (data) {
+          products = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+          renderTable();
+        }
+      });
+    } catch (e) {}
+  }
+
   function saveProducts(prods) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prods));
+    try {
+      if (typeof window.firebaseDB !== "undefined") {
+        window.firebaseDB.ref("products").set(prods);
+      }
+    } catch (e) {}
   }
 
   let products = loadProducts();
@@ -233,6 +252,8 @@ const productJSON = JSON.stringify(products);
   } else {
     showLogin();
   }
+
+  initFirebase();
 
   function renderStats() {
     const el = document.getElementById("adminStats");
