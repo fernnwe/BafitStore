@@ -190,7 +190,7 @@ const productJSON = JSON.stringify(products);
       return;
     }
     try {
-      window.firebaseDB.ref("products").once("value", (snap) => {
+      window.firebaseDB.ref("products").on("value", (snap) => {
         const data = snap.val();
         if (data) {
           const arr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
@@ -199,6 +199,11 @@ const productJSON = JSON.stringify(products);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
             renderTable();
           }
+        } else {
+          window.firebaseDB.ref("products").set(DEFAULT_PRODUCTS);
+          products = DEFAULT_PRODUCTS;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+          renderTable();
         }
       });
     } catch (e) {}
