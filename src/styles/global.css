@@ -264,6 +264,15 @@ main {
   position: relative;
 }
 
+.search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+}
+
 .search-box input {
   width: 100%;
   background: var(--dark-surface);
@@ -279,15 +288,6 @@ main {
 
 .search-box input:focus {
   border-color: var(--primary);
-}
-
-.search-box::before {
-  content: "\1F50D";
-  position: absolute;
-  left: 0.9rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
 }
 
 /* PRODUCT GRID */
