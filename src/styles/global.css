@@ -1550,6 +1550,20 @@ footer a {
   color: var(--primary);
 }
 
+.disclaimer-wa {
+  display: inline-block;
+  color: #25d366;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: opacity 0.2s;
+}
+
+.disclaimer-wa:hover {
+  opacity: 0.8;
+}
+
 .disclaimer-brands {
   display: flex;
   justify-content: center;
