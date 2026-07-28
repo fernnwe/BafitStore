@@ -36,10 +36,22 @@ const productJSON = JSON.stringify(products);
   const WHATSAPP_NUMBER = "50557502645";
   const DEFAULT_PRODUCTS = JSON.parse(productJSON);
 
+  function fixArrays(p) {
+    return {
+      ...p,
+      id: typeof p.id === "number" ? p.id : parseInt(p.id) || 0,
+      sizes: Array.isArray(p.sizes) ? p.sizes : Object.values(p.sizes || {}),
+      outOfStock: Array.isArray(p.outOfStock) ? p.outOfStock : Object.values(p.outOfStock || {}),
+    };
+  }
+
   function loadProductsLocal() {
     try {
       const stored = localStorage.getItem("bafit_products");
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.map(fixArrays);
+      }
     } catch (e) {}
     return DEFAULT_PRODUCTS;
   }
@@ -60,12 +72,7 @@ const productJSON = JSON.stringify(products);
         const data = snap.val();
         if (data) {
           const raw = Array.isArray(data) ? data : Object.values(data);
-          const arr = raw.filter(Boolean).map((p) => ({
-            ...p,
-            id: typeof p.id === "number" ? p.id : parseInt(p.id) || 0,
-            sizes: Array.isArray(p.sizes) ? p.sizes : Object.values(p.sizes || {}),
-            outOfStock: Array.isArray(p.outOfStock) ? p.outOfStock : Object.values(p.outOfStock || {}),
-          }));
+          const arr = raw.filter(Boolean).map(fixArrays);
           if (arr.length > 0) {
             products = arr;
             localStorage.setItem("bafit_products", JSON.stringify(products));
