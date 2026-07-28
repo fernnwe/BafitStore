@@ -56,19 +56,21 @@ const productJSON = JSON.stringify(products);
     return DEFAULT_PRODUCTS;
   }
 
-  let products = loadProductsLocal();
+  let products = [];
   let cart = [];
   let currentFilter = "all";
   let searchQuery = "";
   let selectedSizes = {};
+  let firebaseLoaded = false;
 
   function initFirebase() {
     if (typeof window.firebaseDB === "undefined") {
-      setTimeout(initFirebase, 500);
+      setTimeout(initFirebase, 300);
       return;
     }
     try {
       window.firebaseDB.ref("products").on("value", (snap) => {
+        firebaseLoaded = true;
         const data = snap.val();
         if (data) {
           const raw = Array.isArray(data) ? data : Object.values(data);
@@ -87,8 +89,14 @@ const productJSON = JSON.stringify(products);
       });
     } catch (e) {
       console.log("Firebase error:", e);
+      products = loadProductsLocal();
+      renderProducts();
     }
   }
+
+  products = loadProductsLocal();
+  renderProducts();
+  initFirebase();
 
   const brandLabel = (b) =>
     b === "youngla" ? "YoungLA" : b === "gymshark" ? "Gymshark" : "Breathediviny";
@@ -361,6 +369,4 @@ const productJSON = JSON.stringify(products);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeCart();
   });
-
-  renderProducts();
 </script>
