@@ -193,7 +193,13 @@ const productJSON = JSON.stringify(products);
       window.firebaseDB.ref("products").on("value", (snap) => {
         const data = snap.val();
         if (data) {
-          const arr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+          const raw = Array.isArray(data) ? data : Object.values(data);
+          const arr = raw.filter(Boolean).map((p) => ({
+            ...p,
+            id: typeof p.id === "number" ? p.id : parseInt(p.id) || 0,
+            sizes: Array.isArray(p.sizes) ? p.sizes : Object.values(p.sizes || {}),
+            outOfStock: Array.isArray(p.outOfStock) ? p.outOfStock : Object.values(p.outOfStock || {}),
+          }));
           if (arr.length > 0) {
             products = arr;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
