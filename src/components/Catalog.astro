@@ -63,6 +63,9 @@ const productJSON = JSON.stringify(products);
   let selectedSizes = {};
   let firebaseLoaded = false;
 
+  const brandLabel = (b) =>
+    b === "youngla" ? "YoungLA" : b === "gymshark" ? "Gymshark" : "Breathediviny";
+
   function initFirebase() {
     if (typeof window.firebaseDB === "undefined") {
       setTimeout(initFirebase, 300);
@@ -97,9 +100,6 @@ const productJSON = JSON.stringify(products);
   products = loadProductsLocal();
   renderProducts();
   initFirebase();
-
-  const brandLabel = (b) =>
-    b === "youngla" ? "YoungLA" : b === "gymshark" ? "Gymshark" : "Breathediviny";
 
   function renderCart() {
     const body = document.getElementById("cartBody");
